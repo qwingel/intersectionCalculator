@@ -13,30 +13,40 @@ C++ консольное приложение для вычисления пер
 
 ## Установка зависимостей
 
-### CDT библиотека (header-only)
+### CDT библиотека
 
 Генератор использует библиотеку [CDT](https://github.com/artem-ogre/CDT) для быстрой триангуляции Делоне.
 
-**Установка:**
+**Автоматическая установка (рекомендуется):**
 
-```powershell
-# PowerShell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/artem-ogre/CDT/master/CDT/include/CDT.h" -OutFile "CDT.h"
+CDT уже клонирована в `external/CDT` и собрана. Если её нет:
+
+```bash
+# Клонирование
+cd external
+git clone https://github.com/artem-ogre/CDT.git
+
+# Сборка через CMake
+cd CDT/CDT
+mkdir build && cd build
+cmake -DCDT_USE_AS_COMPILED_LIBRARY=ON -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
 ```
 
-Или скачайте вручную `CDT.h` из [репозитория CDT](https://github.com/artem-ogre/CDT/blob/master/CDT/include/CDT.h) и поместите в корень проекта.
+После этого `external/CDT/CDT/build/Release/CDT.lib` готова к использованию.
 
 ## Сборка и запуск
 
-### Генератор тестовых данных
+### 1. Полный генератор тестовых данных (50k вершин)
 
 **Требования:**
-- Компилятор g++ с поддержкой C++17
-- CDT.h в корне проекта
+- MSVC компилятор (Visual Studio)
+- CDT библиотека собрана (см. выше)
+- CMake 3.8+
 
-**Компиляция:**
-```powershell
-g++ -O2 -std=c++17 generate_test_data_cdt.cpp -o generate_test_data_cdt
+**Компиляция (через Visual Studio Command Prompt):**
+```cmd
+cl /I.\external\CDT\CDT\include /I.\external\CDT\CDT\build /EHsc /O2 /MD /std:c++17 /nologo generate_test_data_cdt.cpp /link external\CDT\CDT\build\Release\CDT.lib /OUT:generate_test_data_cdt.exe
 ```
 
 **Запуск:**
@@ -44,22 +54,52 @@ g++ -O2 -std=c++17 generate_test_data_cdt.cpp -o generate_test_data_cdt
 .\generate_test_data_cdt.exe
 ```
 
-Генератор создаёт:
-- `test_data.bin` - бинарный файл с данными триангуляции
-- `test_data_report.txt` - текстовый отчёт со статистикой
+Создаёт:
+- `test_data.bin` (~2.5 МБ) - полные данные триангуляции
+- `test_data_report.txt` - статистика
 
 **Время генерации:** ~10 секунд
 
-### Утилита проверки данных
+### 2. Простой генератор (9 вершин, для быстрого тестирования)
 
 **Компиляция:**
-```powershell
-g++ -O2 -std=c++17 read_test_data.cpp -o read_test_data
+```cmd
+cl /EHsc /O2 /std:c++17 /nologo generate_simple_test.cpp /Fe:generate_simple_test.exe
 ```
 
 **Запуск:**
 ```powershell
+.\generate_simple_test.exe
+```
+
+**Время генерации:** <1 секунда
+
+### 3. Основное приложение (вычисление изолиний)
+
+**Компиляция:**
+```cmd
+cl /EHsc /O2 /std:c++17 /nologo intersectionCalculator.cpp /Fe:intersectionCalculator.exe
+```
+
+**Запуск:**
+```powershell
+.\intersectionCalculator.exe test_data.bin
+```
+
+Создаёт `segments.bin` с результатами.
+
+### 4. Утилиты просмотра
+
+**Проверка test_data.bin:**
+```cmd
+cl /EHsc /O2 /std:c++17 /nologo read_test_data.cpp /Fe:read_test_data.exe
 .\read_test_data.exe
+```
+
+**Просмотр segments.bin:**
+```cmd
+cl /EHsc /O2 /std:c++17 /nologo view_segments.cpp /Fe:view_segments.exe
+.\view_segments.exe
 ```
 
 ## Формат test_data.bin
@@ -99,14 +139,25 @@ Offset  | Type          | Описание
 
 ```
 intersectionCalculator/
-├── intersectionCalculator.cpp      # Основное приложение
+├── intersectionCalculator.cpp      # Основное приложение (вариант B)
 ├── intersectionCalculator.vcxproj  # Проект Visual Studio
 ├── intersectionCalculator.slnx     # Решение Visual Studio
-├── generate_test_data_cdt.cpp      # Генератор данных
-├── read_test_data.cpp              # Утилита чтения
-├── CDT.h                           # Библиотека триангуляции
+├── generate_test_data_cdt.cpp      # Полный генератор (CDT)
+├── generate_simple_test.cpp        # Простой генератор (быстрый)
+├── read_test_data.cpp              # Утилита проверки test_data.bin
+├── view_segments.cpp               # Утилита просмотра segments.bin
+├── external/
+│   └── CDT/                        # Библиотека триангуляции
+│       └── CDT/
+│           ├── include/            # Заголовочные файлы
+│           ├── src/                # Исходники
+│           └── build/              # Собранная библиотека
+│               └── Release/
+│                   └── CDT.lib
 ├── CLAUDE.md                       # Инструкции для Claude Code
-└── README.md                       # Этот файл
+├── README.md                       # Этот файл
+├── GENERATOR_NOTES.md              # Техническая документация генератора
+└── CALCULATOR_NOTES.md             # Техническая документация алгоритма
 ```
 
 ## Сборка через Visual Studio
@@ -120,7 +171,23 @@ intersectionCalculator/
 ## Требования
 
 - **ОС:** Windows 10/11
-- **Компилятор:** 
-  - Visual Studio 2022+ (для основного приложения)
-  - g++/MinGW-w64 (для генератора данных)
-- **C++ стандарт:** C++17 (генератор), C++20 (основное приложение)
+- **Компилятор:** MSVC (Visual Studio 2022+ или Build Tools)
+- **CMake:** 3.8+ (для сборки CDT)
+- **C++ стандарт:** C++17 (генератор и утилиты), C++20 (основное приложение)
+
+## Результаты работы
+
+При обработке полных тестовых данных (50k вершин):
+```
+Вершин: 50,570
+Треугольников: 100,570
+Сегментов до фильтрации: 5,646
+Удалено петель: 314
+Аннигилировано пар: 1
+Сегментов после фильтрации: 5,330
+Уникальных точек пересечения: 5,332
+```
+
+Файлы результатов:
+- `segments.bin` (~208 КБ) - ориентированные сегменты изолиний
+- Формат описан в `CALCULATOR_NOTES.md`

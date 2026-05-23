@@ -163,7 +163,7 @@ int main() {
     // 3. Подготовка данных для CDT
     std::vector<CDT::V2d<double>> vertices;
     for (const auto& p : allPoints) {
-        vertices.push_back(CDT::V2d<double>::make(p.x, p.y));
+        vertices.push_back(CDT::V2d<double>(p.x, p.y));
     }
 
     // Внешняя граница (constraint)
@@ -186,7 +186,7 @@ int main() {
 
     // 4. Триангуляция
     std::cout << "Запуск CDT триангуляции..." << std::endl;
-    CDT::Triangulation<double> cdt(CDT::FindingClosestPoint::ClosestRandom);
+    CDT::Triangulation<double> cdt(CDT::VertexInsertionOrder::Auto);
 
     cdt.insertVertices(vertices);
     cdt.insertEdges(edges);
