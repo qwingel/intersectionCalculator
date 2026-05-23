@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="intersectionCalculator.vcxproj" />
+  <Project Path="intersectionCalculator.vcxproj" Id="c581084d-a6c9-4447-a9c1-9aaee220df1b" />
 </Solution>

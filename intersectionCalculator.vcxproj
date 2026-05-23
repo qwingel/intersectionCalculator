@@ -139,7 +139,13 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="generate_test_data.cpp" />
+    <ClCompile Include="generate_test_data_cdt.cpp" />
     <ClCompile Include="intersectionCalculator.cpp" />
+    <ClCompile Include="read_test_data.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
