@@ -241,40 +241,6 @@ std::vector<Segment> filter_segments(
     return filtered;
 }
 
-// Сохранение результата в segments.bin
-void save_segments(
-    const std::string& filename,
-    const std::vector<Segment>& segments
-) {
-    std::ofstream outFile(filename, std::ios::binary);
-    if (!outFile) {
-        std::cerr << "Ошибка создания файла " << filename << std::endl;
-        return;
-    }
-
-    // Заголовок
-    int32_t num_segments = static_cast<int32_t>(segments.size());
-    int32_t num_points = static_cast<int32_t>(point_cache.size());
-
-    outFile.write(reinterpret_cast<const char*>(&num_segments), sizeof(int32_t));
-    outFile.write(reinterpret_cast<const char*>(&num_points), sizeof(int32_t));
-
-    // Точки (ID → координаты)
-    for (const auto& [id, point] : point_cache) {
-        outFile.write(reinterpret_cast<const char*>(&id), sizeof(int64_t));
-        outFile.write(reinterpret_cast<const char*>(&point.x), sizeof(double));
-        outFile.write(reinterpret_cast<const char*>(&point.y), sizeof(double));
-    }
-
-    // Сегменты (start_id, end_id)
-    for (const auto& seg : segments) {
-        outFile.write(reinterpret_cast<const char*>(&seg.start_id), sizeof(int64_t));
-        outFile.write(reinterpret_cast<const char*>(&seg.end_id), sizeof(int64_t));
-    }
-
-    outFile.close();
-    std::cout << "Результаты сохранены в " << filename << std::endl;
-}
 
 // ============================================================================
 // Вариант C: Построение графа, разрешение седловых точек, сборка полилайнов
@@ -627,11 +593,6 @@ int main(int argc, char* argv[]) {
     std::cout << "Сегментов после фильтрации: " << filtered.size() << std::endl;
     std::cout << "Уникальных точек пересечения: " << point_cache.size() << std::endl;
     std::cout << std::endl;
-
-    // Сохранение результата варианта B
-    save_segments("segments.bin", filtered);
-
-    std::cout << std::endl;
     std::cout << "=== Вариант C: Построение изолиний ===" << std::endl;
 
     try {
@@ -665,7 +626,7 @@ int main(int argc, char* argv[]) {
         save_isolines("isolines.bin", isolines);
 
         std::cout << std::endl;
-        std::cout << "Готово! Результаты: segments.bin, isolines.bin" << std::endl;
+        std::cout << "Готово! Результат: isolines.bin" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << std::endl;

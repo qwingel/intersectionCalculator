@@ -37,8 +37,6 @@
 | `intersectionCalculator.cpp` | Основное приложение: вычисление изолиний |
 | `generate_test_data_cdt.cpp` | Генератор полного набора данных (50k вершин) с использованием CDT |
 | `generate_simple_test.cpp` | Генератор упрощённого набора данных (9 вершин) для быстрой отладки |
-| `read_test_data.cpp` | Утилита проверки корректности `test_data.bin` |
-| `view_segments.cpp` | Утилита просмотра содержимого `segments.bin` |
 | `external/CDT/` | Библиотека Constrained Delaunay Triangulation |
 
 ## Сборка и запуск
@@ -60,7 +58,7 @@ cl /EHsc /O2 /std:c++17 /nologo intersectionCalculator.cpp /Fe:intersectionCalcu
 .\intersectionCalculator.exe test_data.bin
 ```
 
-Создаёт файлы `segments.bin` (промежуточные сегменты) и `isolines.bin` (финальные изолинии).
+Создаёт файл `isolines.bin` с замкнутыми изолиниями.
 
 ### Полный генератор тестовых данных (50k вершин)
 
@@ -83,17 +81,6 @@ cl /EHsc /O2 /std:c++17 /nologo generate_simple_test.cpp /Fe:generate_simple_tes
 .\generate_simple_test.exe
 ```
 
-### Утилиты
-
-```powershell
-# Проверка test_data.bin
-cl /EHsc /O2 /std:c++17 /nologo read_test_data.cpp /Fe:read_test_data.exe
-.\read_test_data.exe
-
-# Просмотр segments.bin
-cl /EHsc /O2 /std:c++17 /nologo view_segments.cpp /Fe:view_segments.exe
-.\view_segments.exe
-```
 
 ## Формат данных
 
@@ -113,26 +100,6 @@ uint8   plateau_mask[N]      // Вершины плато
 uint8   ridge_mask[N]        // Вершины хребта
 int32   isolated_peak_idx    // Индекс изолированного пика (-1 если нет)
 ```
-
-### segments.bin
-
-Промежуточный результат — направленные сегменты:
-
-```
-int32   num_segments         // Количество сегментов
-int32   num_points           // Количество уникальных точек
-// Для каждой точки:
-  int64   id                 // ID точки (>= 0: вершина, < 0: точка на ребре)
-  double  x, y               // Координаты
-
-// Для каждого сегмента:
-  int64   start_id           // ID начальной точки
-  int64   end_id             // ID конечной точки
-```
-
-**Кодирование ID:**
-- Положительные ID: вершины триангуляции (совпадают с индексом)
-- Отрицательные ID: точки на рёбрах, `encode_edge(u, v) = -(u*1000000 + v + 1)`
 
 ### isolines.bin
 
@@ -185,8 +152,7 @@ int32   num_polylines        // Количество изолиний
 Общее число точек в полилайнах: 5,336
 ```
 
-**Файлы результатов:**
-- `segments.bin` — 213 КБ
+**Файл результата:**
 - `isolines.bin` — 85 КБ
 
 **Интерпретация:**
